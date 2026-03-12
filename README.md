@@ -130,4 +130,6 @@ yamllint==1.37.1
 
 P.S.
 
-Так как в данном репозитории сценарии molecule и custom-tox по сути сосуществуют использовал один коммит, тэг.
+Так как в данном репозитории сценарии molecule и custom-tox по сути сосуществуют использовал один коммит, тэг
+
+https://github.com/AlekseyKaramyshev/ans_testing/releases/tag/1.0.0
