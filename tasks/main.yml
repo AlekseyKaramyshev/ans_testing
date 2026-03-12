@@ -1,0 +1,75 @@
+---
+- name: Detect container environment
+  ansible.builtin.set_fact:
+    _is_container: "{{ ansible_virtualization_type == 'docker' or 'docker' in ansible_env | default({}) | map('regex_search', 'docker') | select('defined') | list }}"
+
+- name: Create vector group
+  ansible.builtin.group:
+    name: "{{ vector_group }}"
+    state: present
+    system: true
+
+- name: Create vector user
+  ansible.builtin.user:
+    name: "{{ vector_user }}"
+    group: "{{ vector_group }}"
+    state: present
+    system: true
+    create_home: true
+    home: "{{ vector_user_home }}"
+
+- name: Create vector directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ vector_user }}"
+    group: "{{ vector_group }}"
+  loop:
+    - "{{ vector_bin_path | dirname }}"
+    - "{{ vector_config_path | dirname }}"
+    - "{{ vector_data_path }}"
+    - "{{ vector_user_home | dirname }}"
+
+- name: Get vector binary
+  ansible.builtin.get_url:
+    url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-{{ vector_platform }}-unknown-linux-gnu.tar.gz"
+    dest: "/tmp/vector-{{ vector_version }}.tar.gz"
+    mode: '0644'
+
+- name: Extract vector binary
+  ansible.builtin.unarchive:
+    src: "/tmp/vector-{{ vector_version }}.tar.gz"
+    dest: "/tmp"
+    remote_src: true
+    creates: "/tmp/vector-{{ vector_version }}/vector"
+
+- name: Install vector binary
+  ansible.builtin.copy:
+    src: "/tmp/vector-{{ vector_platform }}-unknown-linux-gnu/bin/vector"
+    dest: "{{ vector_bin_path }}"
+    mode: '0755'
+    owner: "{{ vector_user }}"
+    group: "{{ vector_group }}"
+    remote_src: yes
+
+- name: Deploy vector systemd service
+  ansible.builtin.template:
+    src: templates/vector.service.j2
+    dest: /etc/systemd/system/vector.service
+  when: not _is_container | default(false)
+  notify: Reload systemd and start vector service
+
+- name: Deploy vector configuration
+  ansible.builtin.template:
+    src: templates/vector.yaml.j2
+    dest: "{{ vector_config_path }}"
+    mode: '0644'
+    owner: "{{ vector_user }}"
+    group: "{{ vector_group }}"
+  notify:
+  - Config deployed
+  - Reload systemd and start vector service
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

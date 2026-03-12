@@ -1,0 +1,15 @@
+---
+- name: Config deployed
+  debug:
+    msg: "Vector config deployed successfully"
+
+- name: Reload systemd and start vector service
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: vector
+    state: restarted
+    enabled: yes
+  when:
+    - not _is_container | default(false)
+    - ansible_service_mgr == "systemd"
+  listen: "Reload systemd and start vector service"

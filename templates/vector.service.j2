@@ -1,0 +1,18 @@
+[Unit]
+Description=Vector
+Documentation=https://vector.dev
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User={{ vector_user }}
+Group={{ vector_group }}
+ExecStart={{ vector_bin_path }} --config {{ vector_config_path }}
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+Environment=VECTOR_LOG=info
+
+[Install]
+WantedBy=multi-user.target

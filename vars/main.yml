@@ -1,0 +1,10 @@
+---
+vector_version: "0.53.0"
+vector_bin_path: "/usr/local/bin/vector"
+vector_config_path: "/etc/vector/vector.yaml"
+vector_data_path: "/var/lib/vector"
+vector_user: "vector"
+vector_group: "vector"
+vector_user_home: "/var/lib/vector"
+vector_platform: "x86_64"
+clickhouse_server_ip: "192.168.0.10"

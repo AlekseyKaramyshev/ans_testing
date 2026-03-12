@@ -1,0 +1,33 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+  roles:
+  - role: vector
+    tags: never
+  tasks:
+    - name: Verify vector binary exists (container-friendly)
+      ansible.builtin.stat:
+        path: "{{ vector_bin_path }}"
+      register: vector_binary
+
+    - name: Assert vector binary installed
+      ansible.builtin.assert:
+        that:
+          - vector_binary.stat.exists
+          - vector_binary.stat.executable
+        fail_msg: "Vector binary not found or not executable"
+      when: vector_binary.stat.exists | default(false)
+
+    - name: Check vector config exists
+      ansible.builtin.stat:
+        path: "{{ vector_config_path }}"
+      register: vector_config_stat
+
+    - name: Assert vector config is present
+      ansible.builtin.assert:
+        that:
+          - vector_config_stat.stat.exists
+          - vector_config_stat.stat.isreg
+        fail_msg: "Vector config is missing at {{ vector_config_path }}"
+        success_msg: "Vector config exists"
